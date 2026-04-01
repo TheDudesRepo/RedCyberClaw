@@ -1,0 +1,176 @@
+#!/bin/bash
+# RedCyberClaw Launcher (rcc)
+# Wraps Claude Code with offensive security branding and environment setup
+
+set -e
+
+# Colors
+RED='\033[0;31m'
+DARK_RED='\033[1;31m'
+GRAY='\033[0;90m'
+WHITE='\033[1;37m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+# Find the RedCyberClaw root (where CLAUDE.md lives)
+RCC_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ ! -f "$RCC_ROOT/CLAUDE.md" ]; then
+    echo -e "${RED}[!] CLAUDE.md not found. Run this from the RedCyberClaw directory.${NC}"
+    exit 1
+fi
+
+# Export OpSec environment
+export DISABLE_TELEMETRY=1
+export DO_NOT_TRACK=1
+export CLAUDE_TELEMETRY_DISABLED=1
+
+# Load .env if it exists
+if [ -f "$RCC_ROOT/.env" ]; then
+    set -a
+    source "$RCC_ROOT/.env"
+    set +a
+fi
+
+# Clear screen
+clear
+
+# Banner
+echo -e "${DARK_RED}"
+cat << 'BANNER'
+
+    ██████╗ ███████╗██████╗  ██████╗██╗   ██╗██████╗ ███████╗██████╗  ██████╗██╗      █████╗ ██╗    ██╗
+    ██╔══██╗██╔════╝██╔══██╗██╔════╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔══██╗██╔════╝██║     ██╔══██╗██║    ██║
+    ██████╔╝█████╗  ██║  ██║██║      ╚████╔╝ ██████╔╝█████╗  ██████╔╝██║     ██║     ███████║██║ █╗ ██║
+    ██╔══██╗██╔══╝  ██║  ██║██║       ╚██╔╝  ██╔══██╗██╔══╝  ██╔══██╗██║     ██║     ██╔══██║██║███╗██║
+    ██║  ██║███████╗██████╔╝╚██████╗   ██║   ██████╔╝███████╗██║  ██║╚██████╗███████╗██║  ██║╚███╔███╔╝
+    ╚═╝  ╚═╝╚══════╝╚═════╝  ╚═════╝   ╚═╝   ╚═════╝ ╚══════╝╚═╝  ╚═╝ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
+
+BANNER
+echo -e "${NC}"
+
+echo -e "${GRAY}    ──────────────────────────────────────────────────────────────────────────────${NC}"
+echo -e "${WHITE}    AI-Powered Offensive Security Platform${NC}"
+echo -e "${GRAY}    ──────────────────────────────────────────────────────────────────────────────${NC}"
+echo ""
+
+# === System Status ===
+echo -e "${RED}    ┌─ System Status ─────────────────────────────────────────────┐${NC}"
+
+# Check Claude Code
+if command -v claude &> /dev/null; then
+    CLAUDE_VER=$(claude --version 2>/dev/null || echo "unknown")
+    echo -e "${RED}    │${NC}  ${GREEN}✓${NC} Claude Code: ${WHITE}${CLAUDE_VER}${NC}"
+else
+    echo -e "${RED}    │${NC}  ${RED}✗${NC} Claude Code: ${RED}NOT INSTALLED${NC}"
+fi
+
+# Check scope
+if [ -f "$RCC_ROOT/Ops/scope.json" ]; then
+    TARGET=$(cat "$RCC_ROOT/Ops/scope.json" | grep -o '"target"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | cut -d'"' -f4)
+    if [ -n "$TARGET" ] && [ "$TARGET" != "" ]; then
+        echo -e "${RED}    │${NC}  ${GREEN}✓${NC} Scope: ${WHITE}${TARGET}${NC}"
+    else
+        echo -e "${RED}    │${NC}  ${YELLOW}○${NC} Scope: ${YELLOW}Not configured${NC} ${GRAY}(edit Ops/scope.json)${NC}"
+    fi
+else
+    echo -e "${RED}    │${NC}  ${RED}✗${NC} Scope: ${RED}Missing${NC} ${GRAY}(run ./install.sh)${NC}"
+fi
+
+# Check findings
+if [ -f "$RCC_ROOT/Ops/findings.jsonl" ]; then
+    FIND_COUNT=$(wc -l < "$RCC_ROOT/Ops/findings.jsonl" 2>/dev/null || echo "0")
+    echo -e "${RED}    │${NC}  ${GREEN}✓${NC} Findings: ${WHITE}${FIND_COUNT}${NC} logged"
+else
+    echo -e "${RED}    │${NC}  ${GRAY}○${NC} Findings: ${GRAY}None yet${NC}"
+fi
+
+# Check engagement log
+if [ -f "$RCC_ROOT/Ops/engagement.md" ]; then
+    ENG_LINES=$(wc -l < "$RCC_ROOT/Ops/engagement.md" 2>/dev/null || echo "0")
+    echo -e "${RED}    │${NC}  ${GREEN}✓${NC} Engagement log: ${WHITE}${ENG_LINES}${NC} lines"
+else
+    echo -e "${RED}    │${NC}  ${GRAY}○${NC} Engagement log: ${GRAY}Not started${NC}"
+fi
+
+# OpSec
+echo -e "${RED}    │${NC}  ${GREEN}✓${NC} Telemetry: ${WHITE}KILLED${NC} ${GRAY}(DO_NOT_TRACK + DISABLE_TELEMETRY)${NC}"
+echo -e "${RED}    │${NC}  ${GREEN}✓${NC} rc-exec: ${WHITE}LOADED${NC} ${GRAY}(regex bypass ready)${NC}"
+
+# Pack count
+PACK_COUNT=$(find "$RCC_ROOT/Packs" -name "SKILL.md" 2>/dev/null | wc -l)
+echo -e "${RED}    │${NC}  ${GREEN}✓${NC} Packs: ${WHITE}${PACK_COUNT}${NC} loaded"
+
+echo -e "${RED}    ├─ Network ──────────────────────────────────────────────────┤${NC}"
+
+# External IP + Geolocation
+IP_JSON=$(curl -s --max-time 5 https://ipinfo.io/json 2>/dev/null)
+if [ -n "$IP_JSON" ] && echo "$IP_JSON" | grep -q '"ip"'; then
+    EXT_IP=$(echo "$IP_JSON" | grep -o '"ip"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4)
+    CITY=$(echo "$IP_JSON" | grep -o '"city"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4)
+    REGION=$(echo "$IP_JSON" | grep -o '"region"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4)
+    COUNTRY=$(echo "$IP_JSON" | grep -o '"country"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4)
+    ORG=$(echo "$IP_JSON" | grep -o '"org"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4)
+    echo -e "${RED}    │${NC}  ${GREEN}✓${NC} External IP: ${WHITE}${EXT_IP}${NC}"
+    echo -e "${RED}    │${NC}  ${GREEN}✓${NC} Location: ${WHITE}${CITY}, ${REGION}, ${COUNTRY}${NC}"
+    echo -e "${RED}    │${NC}  ${GREEN}✓${NC} ISP/VPN: ${WHITE}${ORG}${NC}"
+else
+    # Fallback
+    EXT_IP=$(curl -s --max-time 5 https://ifconfig.me 2>/dev/null || echo "unknown")
+    echo -e "${RED}    │${NC}  ${GREEN}✓${NC} External IP: ${WHITE}${EXT_IP}${NC}"
+    echo -e "${RED}    │${NC}  ${YELLOW}○${NC} Geolocation: ${YELLOW}unavailable${NC}"
+fi
+
+# Hostname + local IP
+HOSTNAME_VAL=$(hostname 2>/dev/null || echo "unknown")
+LOCAL_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "unknown")
+echo -e "${RED}    │${NC}  ${GREEN}✓${NC} Hostname: ${WHITE}${HOSTNAME_VAL}${NC}"
+echo -e "${RED}    │${NC}  ${GREEN}✓${NC} Local IP: ${WHITE}${LOCAL_IP}${NC}"
+
+echo -e "${RED}    ├─ Context Window ───────────────────────────────────────────┤${NC}"
+
+# Estimate project size for context
+TOTAL_CHARS=$(find "$RCC_ROOT" -type f \( -name "*.md" -o -name "*.json" -o -name "*.ts" -o -name "*.sh" -o -name "*.jsonl" \) ! -path "*/.git/*" -exec wc -c {} + 2>/dev/null | tail -1 | awk '{print $1}')
+TOTAL_CHARS=${TOTAL_CHARS:-0}
+EST_TOKENS=$((TOTAL_CHARS / 4))
+MAX_TOKENS=1000000
+PCT=$((EST_TOKENS * 100 / MAX_TOKENS))
+if [ "$PCT" -gt 100 ]; then PCT=100; fi
+
+# Build progress bar (40 chars wide)
+FILLED=$((PCT * 40 / 100))
+EMPTY=$((40 - FILLED))
+BAR=""
+for ((i=0; i<FILLED; i++)); do BAR="${BAR}█"; done
+for ((i=0; i<EMPTY; i++)); do BAR="${BAR}░"; done
+
+# Color the bar based on usage
+if [ "$PCT" -lt 50 ]; then
+    BAR_COLOR="${GREEN}"
+elif [ "$PCT" -lt 75 ]; then
+    BAR_COLOR="${YELLOW}"
+else
+    BAR_COLOR="${RED}"
+fi
+
+EST_K=$((EST_TOKENS / 1000))
+echo -e "${RED}    │${NC}  ${BAR_COLOR}[${BAR}]${NC} ${WHITE}${PCT}%${NC} (${EST_K}K / 1M tokens)"
+
+echo -e "${RED}    └────────────────────────────────────────────────────────────┘${NC}"
+echo ""
+
+# Kill chain
+echo -e "${RED}    ┌─ Kill Chain ────────────────────────────────────────────────┐${NC}"
+echo -e "${RED}    │${NC}                                                              ${RED}│${NC}"
+echo -e "${RED}    │${NC}  ${GREEN}▶ Recon${NC} → ${GREEN}OSINT${NC} → ${GREEN}WebAssess${NC} → ${YELLOW}Exploit${NC} → ${YELLOW}PostExploit${NC} → ${GREEN}Report${NC}  ${RED}│${NC}"
+echo -e "${RED}    │${NC}  ${GRAY}AUTO     AUTO     AUTO       CONFIRM   CONFIRM      AUTO${NC}   ${RED}│${NC}"
+echo -e "${RED}    │${NC}                                                              ${RED}│${NC}"
+echo -e "${RED}    └────────────────────────────────────────────────────────────┘${NC}"
+echo ""
+
+echo -e "${GRAY}    Launching AI execution engine...${NC}"
+echo ""
+
+# Launch Claude Code from the project directory
+cd "$RCC_ROOT"
+exec claude "$@"

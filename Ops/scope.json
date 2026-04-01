@@ -1,0 +1,55 @@
+{
+  "engagement": {
+    "name": "ENGAGEMENT_NAME",
+    "client": "CLIENT_NAME",
+    "type": "pentest|bug-bounty|red-team",
+    "start_date": "2026-01-01",
+    "end_date": "2026-01-31",
+    "tester": "TheDude"
+  },
+  "in_scope": {
+    "domains": [
+      "example.com",
+      "*.example.com"
+    ],
+    "ips": [
+      "10.0.0.0/24"
+    ],
+    "urls": [
+      "https://app.example.com"
+    ],
+    "ports": "1-65535",
+    "notes": "All subdomains and services on listed hosts"
+  },
+  "out_of_scope": {
+    "domains": [
+      "mail.example.com",
+      "vpn.example.com"
+    ],
+    "ips": [
+      "10.0.0.1"
+    ],
+    "paths": [
+      "/admin/delete-all",
+      "/api/billing"
+    ],
+    "notes": "Do not test mail or VPN infrastructure. Avoid destructive endpoints."
+  },
+  "rules_of_engagement": {
+    "testing_window": "09:00-17:00 UTC, weekdays only",
+    "rate_limiting": "Max 100 requests/second for scanning",
+    "prohibited_actions": [
+      "Denial of service",
+      "Data exfiltration of real user data",
+      "Social engineering of employees",
+      "Physical access attempts"
+    ],
+    "notification": {
+      "critical_finding": "Notify client POC within 24 hours",
+      "system_disruption": "Stop testing and notify immediately",
+      "contact": "security@example.com"
+    },
+    "data_handling": "No real user data to be stored. Use redaction."
+  },
+  "phase": "recon"
+}

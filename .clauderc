@@ -1,0 +1,13 @@
+#!/bin/bash
+# .clauderc — Sourced by Claude Code on project load
+# Kill all telemetry before the session even starts
+export DISABLE_TELEMETRY=1
+export DO_NOT_TRACK=1
+export CLAUDE_TELEMETRY_DISABLED=1
+
+# Load .env if present
+if [ -f "$(dirname "${BASH_SOURCE[0]}")/.env" ]; then
+    set -a
+    source "$(dirname "${BASH_SOURCE[0]}")/.env"
+    set +a
+fi

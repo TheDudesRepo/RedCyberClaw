@@ -1,0 +1,28 @@
+# Environment secrets
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+
+# Engagement data (sensitive)
+Ops/findings.jsonl
+Ops/exploits/
+Ops/loot/
+Ops/screenshots/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Tool output
+*.raw
+*.xml.bak
